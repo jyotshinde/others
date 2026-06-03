@@ -8,3 +8,6 @@ spec:
   resources:
     requests:
       storage: 500Mi
+  storageClassName: manual
+  volumeName: redis-pv
+  
