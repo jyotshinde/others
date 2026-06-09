@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Disk usage threshold
+THRESHOLD=80
+
+# Log directory
+LOG_DIR="/opt/app/logs"
+
+# Archive directory
+ARCHIVE_DIR="/opt/app/log_archive"
+
+# Retention period in days
+RETENTION_DAYS=15
+
+# Get current disk usage percentage
+USAGE=$(df -h / | awk 'NR==2 {gsub("%","",$5); print $5}')
+
+if [ "$USAGE" -ge "$THRESHOLD" ]; then
+
+    echo "$(date): Disk usage is ${USAGE}% - Starting cleanup"
+
+    # Create archive directory if not present
+    mkdir -p $ARCHIVE_DIR
+
+    # Compress logs older than 1 day
+    find $LOG_DIR -type f -name "*.log" -mtime +1 -exec gzip {} \;
+
+    # Move compressed logs to archive directory
+    find $LOG_DIR -type f -name "*.gz" -exec mv {} $ARCHIVE_DIR/ \;
+
+    # Delete archived logs older than retention period
+    find $ARCHIVE_DIR -type f -name "*.gz" -mtime +$RETENTION_DAYS -exec rm -f {} \;
+
+    echo "$(date): Cleanup completed"
+
+else
+    echo "$(date): Disk usage is ${USAGE}% - No action required"
+fi
